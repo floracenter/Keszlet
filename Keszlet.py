@@ -3,6 +3,41 @@ import streamlit as st
 import sqlite3
 from datetime import datetime, timedelta
 
+import streamlit as st
+
+# Funkció mobilos vagy asztali nézethez
+def mobilos_interface():
+    st.header("Mobilos nézet")
+    st.write("Ez a mobilos felület.")
+
+def asztali_interface():
+    st.header("Asztali nézet")
+    st.write("Ez az asztali felület.")
+
+# Egyszerű képernyőméret alapú váltás
+st.markdown("""
+    <script>
+        const width = window.innerWidth;
+        const queryParams = new URLSearchParams(window.location.search);
+        if (!queryParams.has("width")) {
+            queryParams.set("width", width);
+            window.history.replaceState(null, null, "?" + queryParams.toString());
+            window.location.reload();  // Az oldal újratöltése a szélesség beállítása után
+        }
+    </script>
+""", unsafe_allow_html=True)
+
+# Lekérdezzük a képernyő szélességét
+params = st.experimental_get_query_params()
+width = int(params.get("width", [1000])[0])
+
+# Döntünk a felület alapján
+if width < 768:
+    mobilos_interface()
+else:
+    asztali_interface()
+
+
 # Árfolyam
 EURO_TO_LEI = 5  # 1 euró = 5 lej
 
