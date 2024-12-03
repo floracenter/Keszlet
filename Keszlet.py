@@ -48,6 +48,21 @@ def frissit_lista():
 
     return pd.DataFrame(table_data)
 
+# CSS stílus a mobilbarát designhoz
+st.markdown("""
+    <style>
+    .css-18e3th9 {
+        padding: 0;  /* Csökkenti a margót */
+    }
+    .css-1d391kg {
+        max-width: 100%;  /* Szélességet teljes kijelzőhöz igazítja */
+    }
+    .sidebar-content {
+        padding: 1rem;  /* Kényelmesebb oldalmenü */
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Streamlit UI
 st.title("Készletkezelő")
 st.sidebar.header("Új virág hozzáadása")
