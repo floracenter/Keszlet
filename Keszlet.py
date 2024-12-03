@@ -49,7 +49,7 @@ def frissit_lista():
 
     return pd.DataFrame(table_data)
 
-# Címke generálása HTML-ben és nyomtatás funkció
+# Címke generálása HTML-ben
 def generalt_cimke_html(virag_nev, kod, lejarati_datum):
     # QR-kód generálása a kódhoz
     qr = qrcode.QRCode(
@@ -116,31 +116,42 @@ if not viragok.empty:
     styled_table = viragok.style.apply(highlight_frissesseg, axis=1)
     st.write(styled_table.to_html(), unsafe_allow_html=True, use_container_width=True)
     
-    # Címkenyomtatási lehetőség kiválasztása
-    selected_index = st.selectbox("Válaszd ki a virágot címkenyomtatáshoz:", viragok.index)
-    if st.button("Címke nyomtatása"):
-        selected_row = viragok.loc[selected_index]
-        cimke_html = generalt_cimke_html(selected_row['Név'], selected_row['Kód'], selected_row['Hátralévő napok'])
-        
-        # Nyomtatási HTML generálása új ablakban
+    # Címkék generálása és nyomtatási oldal előkészítése
+    if st.button("Címkék nyomtatása"):
+        all_labels_html = ""
+        for _, row in viragok.iterrows():
+            cimke_html = generalt_cimke_html(row['Név'], row['Kód'], row['Hátralévő napok'])
+            all_labels_html += cimke_html
+
+        # Nyomtatási HTML generálása
         print_html = f"""
         <html>
             <head>
-                <title>Nyomtatás</title>
+                <title>Címkék Nyomtatása</title>
                 <script>
                     function printPage() {{
                         window.print();
                     }}
                 </script>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                    }}
+                    .label {{
+                        display: inline-block;
+                        margin: 10px;
+                    }}
+                </style>
             </head>
             <body onload="printPage()">
-                {cimke_html}
+                {all_labels_html}
             </body>
         </html>
         """
+        
         # HTML tartalom base64 kódolása
         encoded_html = base64.b64encode(print_html.encode('utf-8')).decode('utf-8')
-        html_link = f'<a href="data:text/html;base64,{encoded_html}" target="_blank">Címke nyomtatása új ablakban</a>'
+        html_link = f'<a href="data:text/html;base64,{encoded_html}" target="_blank">Nyomtatási oldal megnyitása új ablakban</a>'
         st.markdown(html_link, unsafe_allow_html=True)
 
 else:
