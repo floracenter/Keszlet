@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import streamlit as st
 
-# Funkció mobilos vagy asztali nézethez
+# Mobilos és asztali felület megjelenítése
 def mobilos_interface():
     st.header("Mobilos nézet")
     st.write("Ez a mobilos felület.")
@@ -14,29 +14,32 @@ def asztali_interface():
     st.header("Asztali nézet")
     st.write("Ez az asztali felület.")
 
-# Egyszerű képernyőméret alapú váltás
+# JavaScript a User-Agent lekéréséhez
 st.markdown("""
     <script>
-        const width = window.innerWidth;
+        const ua = navigator.userAgent;
         const queryParams = new URLSearchParams(window.location.search);
-        if (!queryParams.has("width")) {
-            queryParams.set("width", width);
+        if (!queryParams.has("device")) {
+            if (/Mobi|Android/i.test(ua)) {
+                queryParams.set("device", "mobile");
+            } else {
+                queryParams.set("device", "desktop");
+            }
             window.history.replaceState(null, null, "?" + queryParams.toString());
-            window.location.reload();  // Az oldal újratöltése a szélesség beállítása után
+            window.location.reload();  // Az oldal újratöltése a típus beállítása után
         }
     </script>
 """, unsafe_allow_html=True)
 
-# Lekérdezzük a képernyő szélességét
+# Lekérdezzük a device paramétert
 params = st.experimental_get_query_params()
-width = int(params.get("width", [1000])[0])
+device_type = params.get("device", ["desktop"])[0]
 
-# Döntünk a felület alapján
-if width < 768:
+# Felület kiválasztása a detektált eszköz alapján
+if device_type == "mobile":
     mobilos_interface()
 else:
     asztali_interface()
-
 
 # Árfolyam
 EURO_TO_LEI = 5  # 1 euró = 5 lej
