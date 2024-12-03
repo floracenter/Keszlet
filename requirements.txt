@@ -6,4 +6,7 @@ streamlit
 reportlab
 qrcode[pil]
 Pillow
-
+flask
+requests
+streamlit
+pybluez

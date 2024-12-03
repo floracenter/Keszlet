@@ -11,6 +11,8 @@ from io import BytesIO
 conn = sqlite3.connect('keszlet.db')
 cursor = conn.cursor()
 
+EURO_TO_LEI = 5  # Átváltási árfolyam 1 EUR = 5 LEI
+
 # Táblázat adatok lekérése
 def frissit_lista():
     cursor.execute("SELECT id, nev, keszlet, eltarthatosag, erkezes_datum, beszerzesi_ar, eladasi_ar_kotes, eladasi_ar_doboz, kod FROM viragok")
