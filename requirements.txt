@@ -1,11 +1,9 @@
-<<<<<<< HEAD
 streamlit
 reportlab
 qrcode[pil]
 Pillow
-=======
 streamlit
 reportlab
 qrcode[pil]
 Pillow
->>>>>>> b264780155c18b2814f15c2508ca6e5fe58e1f70
+
