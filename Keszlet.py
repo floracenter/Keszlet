@@ -122,7 +122,7 @@ if not viragok.empty:
         selected_row = viragok.loc[selected_index]
         cimke_html = generalt_cimke_html(selected_row['Név'], selected_row['Kód'], selected_row['Hátralévő napok'])
         
-        # Nyomtatási HTML generálása
+        # Nyomtatási HTML generálása új ablakban
         print_html = f"""
         <html>
             <head>
@@ -138,7 +138,10 @@ if not viragok.empty:
             </body>
         </html>
         """
-        st.markdown(f'<iframe srcdoc="{print_html}" width="300" height="400" frameborder="0"></iframe>', unsafe_allow_html=True)
+        # HTML tartalom base64 kódolása
+        encoded_html = base64.b64encode(print_html.encode('utf-8')).decode('utf-8')
+        html_link = f'<a href="data:text/html;base64,{encoded_html}" target="_blank">Címke nyomtatása új ablakban</a>'
+        st.markdown(html_link, unsafe_allow_html=True)
 
 else:
     st.write("Nincs elérhető adat.")
