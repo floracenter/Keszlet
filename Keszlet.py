@@ -1,14 +1,11 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 import sqlite3
 from datetime import datetime, timedelta
-import tempfile
-from reportlab.pdfgen import canvas
 import qrcode
 from PIL import Image
-
-# Árfolyam
-EURO_TO_LEI = 5  # 1 euró = 5 lej
+import base64
+from io import BytesIO
 
 # Adatbázis csatlakozás
 conn = sqlite3.connect('keszlet.db')
@@ -52,19 +49,8 @@ def frissit_lista():
 
     return pd.DataFrame(table_data)
 
-# Címke nyomtatás funkció
-def nyomtat_cimke(virag_nev, kod, lejarati_datum):
-    # Ideiglenes PDF fájl létrehozása
-    filename = tempfile.mktemp(".pdf")
-    pdf_canvas = canvas.Canvas(filename, pagesize=(200, 130))  # Címke méret beállítása (50x32.5mm-nek megfelelően)
-    
-    # Címke szövegének hozzáadása
-    pdf_canvas.setFont("Helvetica-Bold", 12)
-    pdf_canvas.drawString(10, 100, f"Név: {virag_nev}")
-    pdf_canvas.setFont("Helvetica", 10)
-    pdf_canvas.drawString(10, 80, f"Kód: {kod}")
-    pdf_canvas.drawString(10, 60, f"Lejárat: {lejarati_datum}")
-
+# Címke generálása HTML-ben és nyomtatás funkció
+def generalt_cimke_html(virag_nev, kod, lejarati_datum):
     # QR-kód generálása a kódhoz
     qr = qrcode.QRCode(
         version=1,
@@ -76,49 +62,20 @@ def nyomtat_cimke(virag_nev, kod, lejarati_datum):
     qr.make(fit=True)
     
     img = qr.make_image(fill_color="black", back_color="white")
-    temp_img = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-    img.save(temp_img.name)
-    
-    # QR-kód hozzáadása a címkéhez
-    pdf_canvas.drawImage(temp_img.name, 120, 40, width=50, height=50)
-    
-    pdf_canvas.save()
-    
-    return filename
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    img_b64 = base64.b64encode(buffer.getvalue()).decode()
 
-# CSS hozzáadása a reszponzív megjelenéshez
-st.markdown("""
-    <style>
-    /* Általános stílus a reszponzivitáshoz */
-    body {
-        max-width: 100% !important;
-        padding: 0;
-        margin: 0;
-    }
-    .stApp {
-        padding: 1rem;  /* Margó csökkentése mobilon */
-    }
-
-    /* Reszponzív táblázat */
-    .dataframe {
-        width: 100% !important;
-        overflow-x: auto;  /* Görgetés engedélyezése kisebb képernyőkön */
-    }
-
-    /* Mobilos stílusok */
-    @media (max-width: 768px) {
-        h1, h2, h3 {
-            font-size: 1.5em !important;  /* Csökkentett szövegméret mobilon */
-        }
-        .stButton button {
-            width: 100% !important;  /* Gombok teljes szélességben mobilon */
-        }
-        .sidebar .stForm {
-            padding: 0.5rem;  /* Kisebb margó az oldalsávon */
-        }
-    }
-    </style>
-""", unsafe_allow_html=True)
+    # HTML címke
+    cimke_html = f"""
+    <div style="width: 200px; height: 130px; border: 1px solid black; padding: 10px; margin: 10px;">
+        <h3>{virag_nev}</h3>
+        <p><strong>Kód:</strong> {kod}</p>
+        <img src="data:image/png;base64,{img_b64}" width="80" height="80">
+        <p><strong>Lejárat:</strong> {lejarati_datum}</p>
+    </div>
+    """
+    return cimke_html
 
 # Streamlit UI
 st.title("Készletkezelő")
@@ -163,13 +120,25 @@ if not viragok.empty:
     selected_index = st.selectbox("Válaszd ki a virágot címkenyomtatáshoz:", viragok.index)
     if st.button("Címke nyomtatása"):
         selected_row = viragok.loc[selected_index]
-        filename = nyomtat_cimke(selected_row['Név'], selected_row['Kód'], selected_row['Hátralévő napok'])
-        with open(filename, "rb") as file:
-            st.download_button(
-                label="Címke letöltése PDF formátumban",
-                data=file,
-                file_name="cimke.pdf",
-                mime="application/pdf"
-            )
+        cimke_html = generalt_cimke_html(selected_row['Név'], selected_row['Kód'], selected_row['Hátralévő napok'])
+        
+        # Nyomtatási HTML generálása
+        print_html = f"""
+        <html>
+            <head>
+                <title>Nyomtatás</title>
+                <script>
+                    function printPage() {{
+                        window.print();
+                    }}
+                </script>
+            </head>
+            <body onload="printPage()">
+                {cimke_html}
+            </body>
+        </html>
+        """
+        st.markdown(f'<iframe srcdoc="{print_html}" width="300" height="400" frameborder="0"></iframe>', unsafe_allow_html=True)
+
 else:
     st.write("Nincs elérhető adat.")
