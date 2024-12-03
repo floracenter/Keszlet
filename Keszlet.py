@@ -3,44 +3,6 @@ import streamlit as st
 import sqlite3
 from datetime import datetime, timedelta
 
-import streamlit as st
-
-# Mobilos és asztali felület megjelenítése
-def mobilos_interface():
-    st.header("Mobilos nézet")
-    st.write("Ez a mobilos felület.")
-
-def asztali_interface():
-    st.header("Asztali nézet")
-    st.write("Ez az asztali felület.")
-
-# JavaScript a képernyőméret azonnali lekéréséhez
-st.markdown("""
-    <script>
-        if (!sessionStorage.getItem("deviceWidth")) {
-            sessionStorage.setItem("deviceWidth", window.innerWidth);
-            window.location.reload();
-        } else {
-            const width = sessionStorage.getItem("deviceWidth");
-            const queryParams = new URLSearchParams(window.location.search);
-            if (!queryParams.has("width") || queryParams.get("width") != width) {
-                queryParams.set("width", width);
-                window.location.replace(window.location.pathname + "?" + queryParams.toString());
-            }
-        }
-    </script>
-""", unsafe_allow_html=True)
-
-# Lekérdezzük a képernyő szélességét
-params = st.experimental_get_query_params()
-width = int(params.get("width", [1000])[0])
-
-# Döntünk a felület alapján
-if width < 768:
-    mobilos_interface()
-else:
-    asztali_interface()
-
 # Árfolyam
 EURO_TO_LEI = 5  # 1 euró = 5 lej
 
@@ -86,17 +48,36 @@ def frissit_lista():
 
     return pd.DataFrame(table_data)
 
-# CSS stílus a mobilbarát designhoz
+# CSS hozzáadása a reszponzív megjelenéshez
 st.markdown("""
     <style>
-    .css-18e3th9 {
-        padding: 0;  /* Csökkenti a margót */
+    /* Általános stílus a reszponzivitáshoz */
+    body {
+        max-width: 100% !important;
+        padding: 0;
+        margin: 0;
     }
-    .css-1d391kg {
-        max-width: 100%;  /* Szélességet teljes kijelzőhöz igazítja */
+    .stApp {
+        padding: 1rem;  /* Margó csökkentése mobilon */
     }
-    .sidebar-content {
-        padding: 1rem;  /* Kényelmesebb oldalmenü */
+
+    /* Reszponzív táblázat */
+    .dataframe {
+        width: 100% !important;
+        overflow-x: auto;  /* Görgetés engedélyezése kisebb képernyőkön */
+    }
+
+    /* Mobilos stílusok */
+    @media (max-width: 768px) {
+        h1, h2, h3 {
+            font-size: 1.5em !important;  /* Csökkentett szövegméret mobilon */
+        }
+        .stButton button {
+            width: 100% !important;  /* Gombok teljes szélességben mobilon */
+        }
+        .sidebar .stForm {
+            padding: 0.5rem;  /* Kisebb margó az oldalsávon */
+        }
     }
     </style>
 """, unsafe_allow_html=True)
