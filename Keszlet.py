@@ -14,29 +14,29 @@ def asztali_interface():
     st.header("Asztali nézet")
     st.write("Ez az asztali felület.")
 
-# JavaScript a User-Agent lekéréséhez
+# JavaScript a képernyőméret azonnali lekéréséhez
 st.markdown("""
     <script>
-        const ua = navigator.userAgent;
-        const queryParams = new URLSearchParams(window.location.search);
-        if (!queryParams.has("device")) {
-            if (/Mobi|Android/i.test(ua)) {
-                queryParams.set("device", "mobile");
-            } else {
-                queryParams.set("device", "desktop");
+        if (!sessionStorage.getItem("deviceWidth")) {
+            sessionStorage.setItem("deviceWidth", window.innerWidth);
+            window.location.reload();
+        } else {
+            const width = sessionStorage.getItem("deviceWidth");
+            const queryParams = new URLSearchParams(window.location.search);
+            if (!queryParams.has("width") || queryParams.get("width") != width) {
+                queryParams.set("width", width);
+                window.location.replace(window.location.pathname + "?" + queryParams.toString());
             }
-            window.history.replaceState(null, null, "?" + queryParams.toString());
-            window.location.reload();  // Az oldal újratöltése a típus beállítása után
         }
     </script>
 """, unsafe_allow_html=True)
 
-# Lekérdezzük a device paramétert
+# Lekérdezzük a képernyő szélességét
 params = st.experimental_get_query_params()
-device_type = params.get("device", ["desktop"])[0]
+width = int(params.get("width", [1000])[0])
 
-# Felület kiválasztása a detektált eszköz alapján
-if device_type == "mobile":
+# Döntünk a felület alapján
+if width < 768:
     mobilos_interface()
 else:
     asztali_interface()
