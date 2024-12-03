@@ -114,7 +114,9 @@ if not viragok.empty:
         return [f"background-color: {color}"] * len(row)
 
     styled_table = viragok.style.apply(highlight_frissesseg, axis=1)
-    st.write(styled_table.to_html(), unsafe_allow_html=True, use_container_width=True)
+
+    # st.write helyett használjuk az st.dataframe-et
+    st.dataframe(styled_table, use_container_width=True)
     
     # Címkék generálása és nyomtatási oldal előkészítése
     if st.button("Címkék nyomtatása"):
