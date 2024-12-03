@@ -2,6 +2,10 @@ import pandas as pd
 import streamlit as st
 import sqlite3
 from datetime import datetime, timedelta
+import tempfile
+from reportlab.pdfgen import canvas
+import qrcode
+from PIL import Image
 
 # Árfolyam
 EURO_TO_LEI = 5  # 1 euró = 5 lej
@@ -47,6 +51,40 @@ def frissit_lista():
         })
 
     return pd.DataFrame(table_data)
+
+# Címke nyomtatás funkció
+def nyomtat_cimke(virag_nev, kod, lejarati_datum):
+    # Ideiglenes PDF fájl létrehozása
+    filename = tempfile.mktemp(".pdf")
+    pdf_canvas = canvas.Canvas(filename, pagesize=(200, 130))  # Címke méret beállítása (50x32.5mm-nek megfelelően)
+    
+    # Címke szövegének hozzáadása
+    pdf_canvas.setFont("Helvetica-Bold", 12)
+    pdf_canvas.drawString(10, 100, f"Név: {virag_nev}")
+    pdf_canvas.setFont("Helvetica", 10)
+    pdf_canvas.drawString(10, 80, f"Kód: {kod}")
+    pdf_canvas.drawString(10, 60, f"Lejárat: {lejarati_datum}")
+
+    # QR-kód generálása a kódhoz
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=5,
+        border=1,
+    )
+    qr.add_data(kod)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    temp_img = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    img.save(temp_img.name)
+    
+    # QR-kód hozzáadása a címkéhez
+    pdf_canvas.drawImage(temp_img.name, 120, 40, width=50, height=50)
+    
+    pdf_canvas.save()
+    
+    return filename
 
 # CSS hozzáadása a reszponzív megjelenéshez
 st.markdown("""
@@ -120,5 +158,18 @@ if not viragok.empty:
 
     styled_table = viragok.style.apply(highlight_frissesseg, axis=1)
     st.write(styled_table.to_html(), unsafe_allow_html=True, use_container_width=True)
+    
+    # Címkenyomtatási lehetőség kiválasztása
+    selected_index = st.selectbox("Válaszd ki a virágot címkenyomtatáshoz:", viragok.index)
+    if st.button("Címke nyomtatása"):
+        selected_row = viragok.loc[selected_index]
+        filename = nyomtat_cimke(selected_row['Név'], selected_row['Kód'], selected_row['Hátralévő napok'])
+        with open(filename, "rb") as file:
+            st.download_button(
+                label="Címke letöltése PDF formátumban",
+                data=file,
+                file_name="cimke.pdf",
+                mime="application/pdf"
+            )
 else:
     st.write("Nincs elérhető adat.")
